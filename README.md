@@ -165,3 +165,53 @@ All geometry uses the **WGS 84** datum (EPSG:4326). CSV WKT lists coordinates as
 - **Google Earth:** open any `<course>.kml` to view the geofence, starting zone, and fiducial on the map.
 - **QGIS / ArcGIS:** add the `.kml` directly, or import the `.csv` as delimited text using the `WKT` field as the geometry.
 - **Scripting (Python):** parse the `WKT` column with `shapely.wkt.loads` for analysis or format conversion.
+
+### Export course boundary points
+
+Run the included script with Python 3 (no additional packages required):
+
+```bash
+python3 extract_course_boundary.py gate-1/gate-1.csv
+# Or export all four gates:
+python3 extract_course_boundary.py gate-1/gate-1.csv gate-2/gate-2.csv gate-3/gate-3.csv gate-4/gate-4.csv
+```
+
+For each input, the script finds the row named `Course Boundary` and writes
+`<input-stem>-boundary.csv` in the same folder, replacing any previous export.
+For example, `gate-1/gate-1.csv` produces `gate-1/gate-1-boundary.csv`:
+
+```csv
+latitude,longitude,altitude
+30.574476367,-96.352046567,0
+30.574435890,-96.351991953,0
+```
+
+Every polygon coordinate becomes one row, retaining its original precision and
+order, including the repeated closing point. Altitude is always `0`. Inputs must
+have one `Course Boundary` row containing a single-ring WKT polygon. Files without
+that row (including empty course files and location-only files) produce an error;
+the script continues processing the remaining inputs and exits with status `1`.
+
+### Export all exclusion zones
+
+Combine exclusion-zone points from all course CSVs into a single file with
+Python 3 (no additional packages required):
+
+```bash
+python3 extract_exclusion_zones.py
+# Or choose an input directory and output file:
+python3 extract_exclusion_zones.py gate-1 --output gate-1-exclusion-zones.csv
+```
+
+The script searches the input directory recursively (the current directory by
+default). Every row whose `Name` contains `Exclusion Zone` contributes its polygon
+points to `exclusion-zones.csv`, with columns `latitude,longitude,name`. Each point
+retains its original precision and zone name, including spaces and punctuation.
+Point order and repeated closing points are preserved. Matching geometries must
+be single-ring WKT polygons.
+
+Empty files and CSVs without both `Name` and `WKT` columns are skipped, including
+previous coordinate exports. The output file is also excluded from the scan, so
+rerunning the script replaces the export without duplicating points. If there
+are no exclusion zones, the output contains only the header. Invalid matching
+geometry causes an error before the output is replaced.

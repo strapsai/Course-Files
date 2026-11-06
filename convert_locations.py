@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy gate location CSVs with only lat,lon,darpa_id,gate columns."""
+"""Copy gate location CSVs with only lat,lon,gate,darpa_id columns."""
 
 import argparse
 import csv
@@ -23,7 +23,7 @@ def convert_locations(source):
 
     output = source.with_name(f"{source.stem}-converted.csv")
     with output.open("w", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=[*columns, "gate"])
+        writer = csv.DictWriter(file, fieldnames=["lat", "lon", "gate", "darpa_id"])
         writer.writeheader()
         writer.writerows(rows)
     return output, len(rows)
